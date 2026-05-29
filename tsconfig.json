@@ -14,7 +14,8 @@
         "declaration": true,
         "sourceMap": true,
         "noEmit": false,
-        "allowJs": true
+        "allowJs": true,
+        "checkJs": false
     },
     "ts-node": {
         "esm": true
