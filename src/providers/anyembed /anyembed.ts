@@ -9,7 +9,7 @@ import type {
     Subtitle
 } from '@omss/framework';
 import { BaseProvider } from '@omss/framework';
-import { generateRandomUserAgent } from '../../utils/ua';
+import { generateRandomUserAgent } from '../../utils/ua.js';
 import { AnyEmbedApiResponse, TokenResponse } from './anyembed.types.js';
 
 // anyembed is still up and coming.
