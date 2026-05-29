@@ -4,7 +4,7 @@ import type {
     ProviderMediaObject,
     ProviderResult
 } from '@omss/framework';
-import { generateRandomUserAgent } from '../../utils/ua';
+import { generateRandomUserAgent } from '../../utils/ua.js';
 import { TulnexApiResponse } from './tulnex.types.js';
 import { decryptPayload } from './decrypt.js';
 import { extractUrl } from './tulnex.mapper.js';
