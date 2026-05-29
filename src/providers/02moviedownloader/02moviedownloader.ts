@@ -13,7 +13,7 @@ import {
     MovieDownloaderResponse,
     Token
 } from './02moviedownloader.types.js';
-import { generateRandomUserAgent } from '../../utils/ua
+import { generateRandomUserAgent } from '../../utils/ua';
 
 export class MovieDownloader extends BaseProvider {
     readonly id = '02moviedownloader';
