@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { knownThirdPartyProxies } from './thirdPartyProxies.js';
 import { streamPatterns } from './streamPatterns.js';
+import type { Request, Response } from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,7 +14,7 @@ async function main() {
         name: 'CinePro',
         version: '1.0.0',
 
-        // Network - BAS YE 3 LINE BADLI HAI
+        // Network
         host: process.env.HOST?? '0.0.0.0',
         port: Number(process.env.PORT?? 10000),
         publicUrl: process.env.PUBLIC_URL?? `http://localhost:${process.env.PORT?? 10000}`,
@@ -81,8 +82,8 @@ async function main() {
 
     await server.start();
 
-    // 👇 BAS YE NAYA ROUTE ADD KIYA - HF KE LIYE
-    server.app.get('/v1/info/:tmdbId', async (req, res) => {
+    // Custom route for HuggingFace frontend
+    server.getApp().get('/v1/info/:tmdbId', async (req: Request, res: Response) => {
         try {
             const { tmdbId } = req.params;
             if (!process.env.TMDB_API_KEY) {
@@ -91,7 +92,7 @@ async function main() {
             const tmdbRes = await fetch(
                 `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
             );
-            const data = await tmdbRes.json();
+            const data: any = await tmdbRes.json();
             if (data.success === false ||!data.id) {
                 return res.status(404).json({ error: 'Movie not found' });
             }
