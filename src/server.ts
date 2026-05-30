@@ -14,9 +14,9 @@ async function main() {
         version: '1.0.0',
 
         // Network - Render ke liye fix
-        host: process.env.HOST ?? '0.0.0.0', // localhost nahi, 0.0.0.0
-        port: Number(process.env.PORT ?? 10000), // 3000 nahi, 10000
-        publicUrl: process.env.PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL,
+        host: process.env.HOST ?? '0.0.0.0',
+        port: Number(process.env.PORT ?? 10000),
+        publicUrl: process.env.PUBLIC_URL,
 
         // Cache (memory for dev, Redis for prod)
         cache: {
@@ -45,7 +45,7 @@ async function main() {
         },
 
         cors: {
-            origin: process.env.CORS_ORIGIN ?? '*', // Sab allow kar de
+            origin: process.env.CORS_ORIGIN ?? '*',
             methods: ['GET', 'OPTIONS', 'POST'],
             allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
             exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag', 'Content-Length'],
@@ -54,19 +54,8 @@ async function main() {
         },
 
         stremio: {
-            // exposes a stremio addon on /stremio/manifest.json
             enableNativeAddon: process.env.STREMIO_ADDON === 'true',
-            // you can your own custom stremio addons as sources into cinepro.
             stremioAddons: []
-            /*
-            stremioAddons: [
-                {
-                    id: 'some-unique-id',
-                    url: 'https://example.com/manifest.json',
-                    enabled: true
-                }
-            ]
-            */
         },
 
         // MCP for AI agents
@@ -81,21 +70,16 @@ async function main() {
 
     await server.start();
 
-    const publicUrl =
-        process.env.PUBLIC_URL ??
-        process.env.RENDER_EXTERNAL_URL ??
-        `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` ??
-        `http://localhost:${process.env.PORT ?? 10000}`;
+    // FIX: TS error hatane ke liye ye line change ki
+    const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`;
 
     const uiUrl = `https://ui.cinepro.cc/?omssurl=${encodeURIComponent(publicUrl)}`;
 
     const title = '🚀 CinePro Backend Started';
-    const contrib =
-        '🤝 We are looking for contributors to improve and develop!';
+    const contrib = '🤝 We are looking for contributors to improve and develop!';
     const repo = 'Contribute: https://github.com/cinepro-org/ui';
     const tryIt = `🌐 Public URL: ${publicUrl}`;
-    const note =
-        'Backend is ready to serve requests.';
+    const note = 'Backend is ready to serve requests.';
 
     const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
 
