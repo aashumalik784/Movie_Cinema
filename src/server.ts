@@ -13,12 +13,10 @@ async function main() {
         name: 'CinePro',
         version: '1.0.0',
 
-        // Network - Render ke liye fix
         host: process.env.HOST ?? '0.0.0.0',
         port: Number(process.env.PORT ?? 10000),
         publicUrl: process.env.PUBLIC_URL,
 
-        // Cache (memory for dev, Redis for prod)
         cache: {
             type: (process.env.CACHE_TYPE as 'memory' | 'redis') ?? 'memory',
             ttl: {
@@ -32,13 +30,11 @@ async function main() {
             }
         },
 
-        // TMDB
         tmdb: {
             apiKey: process.env.TMDB_API_KEY!,
-            cacheTTL: 24 * 60 * 60 // 24h
+            cacheTTL: 24 * 60 * 60
         },
 
-        // Third Party Proxy removal
         proxyConfig: {
             knownThirdPartyProxies: knownThirdPartyProxies,
             streamPatterns
@@ -58,15 +54,14 @@ async function main() {
             stremioAddons: []
         },
 
-        // MCP for AI agents
         mcp: {
             enabled: process.env.MCP_ENABLED === 'true'
         }
     });
 
-    // ✅ ROOT ROUTE ADD KARO - 404 FIX
-    const app = server.getApp(); // Express/Fastify instance
-    app.get('/', (req: any, res: any) => {
+    const app = server.getApp();
+    
+    app.get('/', (_req: any, res: any) => {
         res.status(200).json({
             status: 'ok',
             message: 'CinePro API is running',
@@ -75,20 +70,16 @@ async function main() {
                 stream: '/stream/:type/:id',
                 catalog: '/catalog/:type/:id.json'
             },
-            docs: 'https://github.com/cinepro-org/core',
             publicUrl: process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`
         });
     });
 
-    // Register providers
     const registry = server.getRegistry();
     await registry.discoverProviders(path.join(__dirname, './providers/'));
 
     await server.start();
 
-    // FIX: TS error hatane ke liye ye line change ki
     const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`;
-
     const uiUrl = `https://ui.cinepro.cc/?omssurl=${encodeURIComponent(publicUrl)}`;
 
     const title = '🚀 CinePro Backend Started';
@@ -98,13 +89,9 @@ async function main() {
     const note = 'Backend is ready to serve requests.';
 
     const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
-
-    // compute box width based on longest line
     const width = Math.max(...lines.map((l) => l.length)) + 2;
-
     const borderTop = '╭' + '─'.repeat(width) + '╮';
     const borderBottom = '╰' + '─'.repeat(width) + '╯';
-
     const pad = (line: string) => '│ ' + line.padEnd(width - 2, ' ') + ' │';
 
     console.log(`
