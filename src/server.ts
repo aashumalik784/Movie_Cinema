@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { knownThirdPartyProxies } from './thirdPartyProxies.js';
 import { streamPatterns } from './streamPatterns.js';
-import type { Request, Response } from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,25 +54,49 @@ async function main() {
         },
 
         stremio: {
-            // exposes a stremio addon on /stremio/manifest.json
             enableNativeAddon: process.env.STREMIO_ADDON === 'true',
-            // you can your own custom stremio addons as sources into cinepro.
             stremioAddons: []
-            /*
-            stremioAddons: [
-                {
-                    id: 'some-unique-id',
-                    url: 'https://example.com/manifest.json',
-                    enabled: true
-                }
-            ]
-            */
         },
 
-        // MCP for AI agents
         mcp: {
             enabled: process.env.MCP_ENABLED === 'true'
-        }
+        },
+
+        // 👇 YE ADD KAR - OMSS KA OFFICIAL CUSTOM ROUTE SYSTEM
+        plugins: [
+            {
+                name: 'custom-info-route',
+                register: async (omss) => {
+                    omss.route({
+                        method: 'GET',
+                        url: '/v1/info/:tmdbId',
+                        handler: async (request, reply) => {
+                            try {
+                                const { tmdbId } = request.params as { tmdbId: string };
+                                if (!process.env.TMDB_API_KEY) {
+                                    return reply.status(500).send({ error: 'TMDB_API_KEY missing' });
+                                }
+                                const tmdbRes = await fetch(
+                                    `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
+                                );
+                                const data: any = await tmdbRes.json();
+                                if (data.success === false ||!data.id) {
+                                    return reply.status(404).send({ error: 'Movie not found' });
+                                }
+                                return reply.send({
+                                    title: data.title,
+                                    poster: data.poster_path? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
+                                    overview: data.overview,
+                                    year: data.release_date?.split('-')[0] || 'N/A'
+                                });
+                            } catch (e) {
+                                return reply.status(500).send({ error: 'TMDB fetch failed' });
+                            }
+                        }
+                    });
+                }
+            }
+        ]
     });
 
     // Register providers
@@ -81,31 +104,6 @@ async function main() {
     await registry.discoverProviders(path.join(__dirname, './providers/'));
 
     await server.start();
-
-    // Custom route for HuggingFace frontend
-    server.getApp().get('/v1/info/:tmdbId', async (req: Request, res: Response) => {
-        try {
-            const { tmdbId } = req.params;
-            if (!process.env.TMDB_API_KEY) {
-                return res.status(500).json({ error: 'TMDB_API_KEY missing' });
-            }
-            const tmdbRes = await fetch(
-                `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
-            );
-            const data: any = await tmdbRes.json();
-            if (data.success === false ||!data.id) {
-                return res.status(404).json({ error: 'Movie not found' });
-            }
-            res.json({
-                title: data.title,
-                poster: data.poster_path? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
-                overview: data.overview,
-                year: data.release_date?.split('-')[0] || 'N/A'
-            });
-        } catch (e) {
-            res.status(500).json({ error: 'TMDB fetch failed' });
-        }
-    });
 
     const publicUrl =
         process.env.PUBLIC_URL??
@@ -122,13 +120,9 @@ async function main() {
         'You will need to give the website "access to local applications" that it works.';
 
     const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
-
-    // compute box width based on longest line
     const width = Math.max(...lines.map((l) => l.length)) + 2;
-
     const borderTop = '╭' + '─'.repeat(width) + '╮';
     const borderBottom = '╰' + '─'.repeat(width) + '╯';
-
     const pad = (line: string) => '│ ' + line.padEnd(width - 2, ' ') + ' │';
 
     console.log(`
