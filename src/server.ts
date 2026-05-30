@@ -13,21 +13,21 @@ async function main() {
         name: 'CinePro',
         version: '1.0.0',
 
-        // Network - Render ke liye fix
-        host: process.env.HOST ?? '0.0.0.0',
-        port: Number(process.env.PORT ?? 10000),
-        publicUrl: process.env.PUBLIC_URL,
+        // Network - BAS YE 3 LINE BADLI HAI
+        host: process.env.HOST?? '0.0.0.0',
+        port: Number(process.env.PORT?? 10000),
+        publicUrl: process.env.PUBLIC_URL?? `http://localhost:${process.env.PORT?? 10000}`,
 
         // Cache (memory for dev, Redis for prod)
         cache: {
-            type: (process.env.CACHE_TYPE as 'memory' | 'redis') ?? 'memory',
+            type: (process.env.CACHE_TYPE as 'memory' | 'redis')?? 'memory',
             ttl: {
                 sources: 60 * 60,
                 subtitles: 60 * 60 * 24
             },
             redis: {
-                host: process.env.REDIS_HOST ?? 'localhost',
-                port: Number(process.env.REDIS_PORT ?? 6379),
+                host: process.env.REDIS_HOST?? 'localhost',
+                port: Number(process.env.REDIS_PORT?? 6379),
                 password: process.env.REDIS_PASSWORD
             }
         },
@@ -45,17 +45,28 @@ async function main() {
         },
 
         cors: {
-            origin: process.env.CORS_ORIGIN ?? '*',
-            methods: ['GET', 'OPTIONS', 'POST'],
-            allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
-            exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag', 'Content-Length'],
+            origin: process.env.CORS_ORIGIN?? '*',
+            methods: ['GET', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag'],
             preflightContinue: false,
             optionsSuccessStatus: 204
         },
 
         stremio: {
+            // exposes a stremio addon on /stremio/manifest.json
             enableNativeAddon: process.env.STREMIO_ADDON === 'true',
+            // you can your own custom stremio addons as sources into cinepro.
             stremioAddons: []
+            /*
+            stremioAddons: [
+                {
+                    id: 'some-unique-id',
+                    url: 'https://example.com/manifest.json',
+                    enabled: true
+                }
+            ]
+            */
         },
 
         // MCP for AI agents
@@ -70,16 +81,44 @@ async function main() {
 
     await server.start();
 
-    // FIX: TS error hatane ke liye ye line change ki
-    const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`;
+    // 👇 BAS YE NAYA ROUTE ADD KIYA - HF KE LIYE
+    server.app.get('/v1/info/:tmdbId', async (req, res) => {
+        try {
+            const { tmdbId } = req.params;
+            if (!process.env.TMDB_API_KEY) {
+                return res.status(500).json({ error: 'TMDB_API_KEY missing' });
+            }
+            const tmdbRes = await fetch(
+                `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
+            );
+            const data = await tmdbRes.json();
+            if (data.success === false ||!data.id) {
+                return res.status(404).json({ error: 'Movie not found' });
+            }
+            res.json({
+                title: data.title,
+                poster: data.poster_path? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
+                overview: data.overview,
+                year: data.release_date?.split('-')[0] || 'N/A'
+            });
+        } catch (e) {
+            res.status(500).json({ error: 'TMDB fetch failed' });
+        }
+    });
+
+    const publicUrl =
+        process.env.PUBLIC_URL??
+        `http://${process.env.HOST?? 'localhost'}:${process.env.PORT?? 3000}`;
 
     const uiUrl = `https://ui.cinepro.cc/?omssurl=${encodeURIComponent(publicUrl)}`;
 
-    const title = '🚀 CinePro Backend Started';
-    const contrib = '🤝 We are looking for contributors to improve and develop!';
+    const title = '🚀 CinePro/ui is in public testing';
+    const contrib =
+        '🤝 We are looking for contributors to improve and develop!';
     const repo = 'Contribute: https://github.com/cinepro-org/ui';
-    const tryIt = `🌐 Public URL: ${publicUrl}`;
-    const note = 'Backend is ready to serve requests.';
+    const tryIt = `🌐 Try it out: ${uiUrl}!`;
+    const note =
+        'You will need to give the website "access to local applications" that it works.';
 
     const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
 
@@ -92,7 +131,7 @@ async function main() {
     const pad = (line: string) => '│ ' + line.padEnd(width - 2, ' ') + ' │';
 
     console.log(`
-================== CINEPRO BACKEND ==================
+================== CINEPRO BETA ANNOUNCEMENT ==================
 
 ${borderTop}
 ${lines.map(pad).join('\n')}
@@ -100,7 +139,6 @@ ${borderBottom}
 `);
 }
 
-main().catch((err) => {
-    console.error('Failed to start server:', err);
+main().catch(() => {
     process.exit(1);
 });
