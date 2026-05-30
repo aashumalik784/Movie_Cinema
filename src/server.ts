@@ -13,7 +13,7 @@ async function main() {
         name: 'CinePro',
         version: '1.0.0',
 
-        // Network - BAS YE 3 LINE BADLI
+        // Network
         host: process.env.HOST?? '0.0.0.0',
         port: Number(process.env.PORT?? 10000),
         publicUrl: process.env.PUBLIC_URL?? `http://localhost:${process.env.PORT?? 10000}`,
@@ -60,38 +60,39 @@ async function main() {
 
         mcp: {
             enabled: process.env.MCP_ENABLED === 'true'
+        },
+
+        // 👇 YE HAI OMSS KA OFFICIAL TARIKA CUSTOM ROUTE KA
+        middleware: async (fastify: any) => {
+            fastify.get('/v1/info/:tmdbId', async (request: any, reply: any) => {
+                try {
+                    const { tmdbId } = request.params;
+                    if (!process.env.TMDB_API_KEY) {
+                        return reply.status(500).send({ error: 'TMDB_API_KEY missing' });
+                    }
+                    const tmdbRes = await fetch(
+                        `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
+                    );
+                    const data: any = await tmdbRes.json();
+                    if (data.success === false ||!data.id) {
+                        return reply.status(404).send({ error: 'Movie not found' });
+                    }
+                    return reply.send({
+                        title: data.title,
+                        poster: data.poster_path? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
+                        overview: data.overview,
+                        year: data.release_date?.split('-')[0] || 'N/A'
+                    });
+                } catch (e) {
+                    return reply.status(500).send({ error: 'TMDB fetch failed' });
+                }
+            });
         }
     });
 
     // Register providers
     const registry = server.getRegistry();
     await registry.discoverProviders(path.join(__dirname, './providers/'));
-
-    // 👇 YE HAI SAHI TARIKA - OMSS ME FASTIFY USE HOTA HAI
-    const fastify = server.getFastify();
-    fastify.get('/v1/info/:tmdbId', async (request: any, reply: any) => {
-        try {
-            const { tmdbId } = request.params;
-            if (!process.env.TMDB_API_KEY) {
-                return reply.status(500).send({ error: 'TMDB_API_KEY missing' });
-            }
-            const tmdbRes = await fetch(
-                `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`
-            );
-            const data: any = await tmdbRes.json();
-            if (data.success === false ||!data.id) {
-                return reply.status(404).send({ error: 'Movie not found' });
-            }
-            return reply.send({
-                title: data.title,
-                poster: data.poster_path? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
-                overview: data.overview,
-                year: data.release_date?.split('-')[0] || 'N/A'
-            });
-        } catch (e) {
-            return reply.status(500).send({ error: 'TMDB fetch failed' });
-        }
-    });
 
     await server.start();
 
