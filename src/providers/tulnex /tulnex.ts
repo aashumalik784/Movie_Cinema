@@ -160,4 +160,4 @@ export class TulnexProvider extends BaseProvider {
             return false;
         }
     }
-}
+                }
