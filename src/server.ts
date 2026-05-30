@@ -64,6 +64,22 @@ async function main() {
         }
     });
 
+    // ✅ ROOT ROUTE ADD KARO - 404 FIX
+    const app = server.getApp(); // Express/Fastify instance
+    app.get('/', (req: any, res: any) => {
+        res.status(200).json({
+            status: 'ok',
+            message: 'CinePro API is running',
+            endpoints: {
+                manifest: '/manifest.json',
+                stream: '/stream/:type/:id',
+                catalog: '/catalog/:type/:id.json'
+            },
+            docs: 'https://github.com/cinepro-org/core',
+            publicUrl: process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`
+        });
+    });
+
     // Register providers
     const registry = server.getRegistry();
     await registry.discoverProviders(path.join(__dirname, './providers/'));
