@@ -342,4 +342,4 @@ export class MovieDownloader extends BaseProvider {
             ]
         };
     }
-}
+                                      }
