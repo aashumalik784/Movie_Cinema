@@ -386,4 +386,4 @@ export class PeachifyProvider extends BaseProvider {
             return false;
         }
     }
-  }
+    }
