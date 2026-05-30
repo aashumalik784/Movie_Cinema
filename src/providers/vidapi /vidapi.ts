@@ -162,4 +162,4 @@ export class VidApiProvider extends BaseProvider {
             return false;
         }
     }
-}
+                    }
