@@ -59,48 +59,25 @@ async function main() {
         }
     });
 
-    const app = server.getApp();
-    
-    app.get('/', (_req: any, res: any) => {
-        res.status(200).json({
-            status: 'ok',
-            message: 'CinePro API is running',
-            endpoints: {
-                manifest: '/manifest.json',
-                stream: '/stream/:type/:id',
-                catalog: '/catalog/:type/:id.json'
-            },
-            publicUrl: process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`
-        });
-    });
-
+    // Register providers
     const registry = server.getRegistry();
     await registry.discoverProviders(path.join(__dirname, './providers/'));
 
     await server.start();
 
     const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT ?? 10000}`;
-    const uiUrl = `https://ui.cinepro.cc/?omssurl=${encodeURIComponent(publicUrl)}`;
-
-    const title = '🚀 CinePro Backend Started';
-    const contrib = '🤝 We are looking for contributors to improve and develop!';
-    const repo = 'Contribute: https://github.com/cinepro-org/ui';
-    const tryIt = `🌐 Public URL: ${publicUrl}`;
-    const note = 'Backend is ready to serve requests.';
-
-    const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
-    const width = Math.max(...lines.map((l) => l.length)) + 2;
-    const borderTop = '╭' + '─'.repeat(width) + '╮';
-    const borderBottom = '╰' + '─'.repeat(width) + '╯';
-    const pad = (line: string) => '│ ' + line.padEnd(width - 2, ' ') + ' │';
 
     console.log(`
-================== CINEPRO BACKEND ==================
+================== CINEPRO BACKEND STARTED ==================
 
-${borderTop}
-${lines.map(pad).join('\n')}
-${borderBottom}
-`);
+✅ Server is running on: ${publicUrl}
+📡 API Endpoints:
+   - Manifest: ${publicUrl}/manifest.json
+   - Stream: ${publicUrl}/stream/:type/:id
+   - Catalog: ${publicUrl}/catalog/:type/:id.json
+
+🤝 Contribute: https://github.com/cinepro-org/ui
+    `);
 }
 
 main().catch((err) => {
