@@ -375,4 +375,4 @@ export class StreamMafiaProvider extends BaseProvider {
             ]
         };
     }
-                    }
+    }
