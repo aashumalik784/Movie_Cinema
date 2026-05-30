@@ -13,10 +13,10 @@ async function main() {
         name: 'CinePro',
         version: '1.0.0',
 
-        // Network
-        host: process.env.HOST ?? 'localhost',
-        port: Number(process.env.PORT ?? 3000),
-        publicUrl: process.env.PUBLIC_URL,
+        // Network - Render ke liye fix
+        host: process.env.HOST ?? '0.0.0.0', // localhost nahi, 0.0.0.0
+        port: Number(process.env.PORT ?? 10000), // 3000 nahi, 10000
+        publicUrl: process.env.PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL,
 
         // Cache (memory for dev, Redis for prod)
         cache: {
@@ -45,10 +45,10 @@ async function main() {
         },
 
         cors: {
-            origin: process.env.CORS_ORIGIN ?? '*',
-            methods: ['GET', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization'],
-            exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag'],
+            origin: process.env.CORS_ORIGIN ?? '*', // Sab allow kar de
+            methods: ['GET', 'OPTIONS', 'POST'],
+            allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
+            exposedHeaders: ['Content-Range', 'Accept-Ranges', 'ETag', 'Content-Length'],
             preflightContinue: false,
             optionsSuccessStatus: 204
         },
@@ -83,17 +83,19 @@ async function main() {
 
     const publicUrl =
         process.env.PUBLIC_URL ??
-        `http://${process.env.HOST ?? 'localhost'}:${process.env.PORT ?? 3000}`;
+        process.env.RENDER_EXTERNAL_URL ??
+        `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` ??
+        `http://localhost:${process.env.PORT ?? 10000}`;
 
     const uiUrl = `https://ui.cinepro.cc/?omssurl=${encodeURIComponent(publicUrl)}`;
 
-    const title = '🚀 CinePro/ui is in public testing';
+    const title = '🚀 CinePro Backend Started';
     const contrib =
         '🤝 We are looking for contributors to improve and develop!';
     const repo = 'Contribute: https://github.com/cinepro-org/ui';
-    const tryIt = `🌐 Try it out: ${uiUrl} !`;
+    const tryIt = `🌐 Public URL: ${publicUrl}`;
     const note =
-        'You will need to give the website "access to local applications" that it works.';
+        'Backend is ready to serve requests.';
 
     const lines = [title, '', repo, '', contrib, '', tryIt, '', note];
 
@@ -106,7 +108,7 @@ async function main() {
     const pad = (line: string) => '│ ' + line.padEnd(width - 2, ' ') + ' │';
 
     console.log(`
-================== CINEPRO BETA ANNOUNCEMENT ==================
+================== CINEPRO BACKEND ==================
 
 ${borderTop}
 ${lines.map(pad).join('\n')}
@@ -114,6 +116,7 @@ ${borderBottom}
 `);
 }
 
-main().catch(() => {
+main().catch((err) => {
+    console.error('Failed to start server:', err);
     process.exit(1);
 });
